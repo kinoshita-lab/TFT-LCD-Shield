@@ -94,8 +94,6 @@ private:
 	void sendData16(const uint8_t data1, const uint8_t data2);
 
 	void fillScreenInternal(const uint8_t internalColorUpper, const uint8_t internalColorLower);
-
-	void internalLine_VH(const uint8_t x1, const uint8_t y1, const uint8_t x2, const uint8_t y2);
 	void internalLine_Slant(const uint8_t x1, const uint8_t y1, const uint8_t x2, const uint8_t y2);
 	
 	InternalColor _backGroundColor;
@@ -136,14 +134,26 @@ void EasyLcd::point(const uint8_t x, const uint8_t y)
 
 void EasyLcd::line(const uint8_t x1, const uint8_t y1, const uint8_t x2, const uint8_t y2)
 {
-	selectLcd();
-	if (x1 == x2
-		|| y1 == y2) {
-			internalLine_VH(x1, y1, x2, y2);
-	} else {
-		internalLine_Slant(x1, y1, x2, y2);
+	// vertical
+	if (x1 == x2) {
+		if (y2 > y1) {
+			swap< uint8_t >(y1, y2);
+		}
+		fillRect(x1, y1, 1, y2 - y1);
+		return;
 	}
-	unselectLcd();
+
+	// horizontal
+	if (y1 == y2) {
+		if (x2 > x1) {
+			swap< uint8_t >(x2, x1);
+		}
+		fillRect(x1, y1, x2-x1, 1);
+		return;
+	}
+	
+	// otherwize
+	internalLine_Slant(x1, y1, x2, y2);
 }
 
 
@@ -469,46 +479,6 @@ void EasyLcd::fillScreenInternal(const uint8_t internalColorUpper, const uint8_t
 		sendData16(internalColorUpper, internalColorLower);
 	}
 	unselectLcd();
-}
-
-void EasyLcd::internalLine_VH(const uint8_t x1, const uint8_t y1, const uint8_t x2, const uint8_t y2)
-{
-	uint8_t ix1 = x1;
-	uint8_t ix2 = x2;
-	uint8_t iy1 = y1;
-	uint8_t iy2 = y2;
-	
-// 終点のほうが始点より座標が大きかったら入れ替える	
-	if (ix1 > ix2) {
-		swap< uint8_t >(&ix1, &ix2);
-	}
-	
-// 終点のほうが始点より座標が大きかったら入れ替える	
-	if (iy1 > iy2) {
-		swap< uint8_t >(&iy1, &iy2);
-	}
-	
-// 座標制限
-	limit< uint8_t >(&ix1, 0, LCD_WIDTH - 1);
-	limit< uint8_t >(&ix2, 0, LCD_WIDTH - 1);
-	limit< uint8_t >(&iy1, 0, LCD_HEIGHT - 1);
-	limit< uint8_t >(&iy2, 0, LCD_HEIGHT - 1);
-	
-// width, height どちらかは0になる
-	uint8_t width = ix2 - ix1;
-	width = width == 0 ? 1 : width;
-	
-	uint8_t height = iy2 - iy1;
-	height = height == 0 ? 1 : height;
-	
-	setLcdDrawRange(ix1, iy1, width, height);
-	
-	uint8_t times = width != 1 ? width : height;
-
-	for (int i = 0; i < times; i++)	{
-		SPI.transfer (_foreGroundColor.upper);
-		SPI.transfer (_foreGroundColor.lower);
-	}
 }
 
 /** based on http://d.hatena.ne.jp/jyakky7/20070325/1174804611
