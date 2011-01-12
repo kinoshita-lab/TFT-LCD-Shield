@@ -64,7 +64,7 @@ public:
 
 	void point(const uint8_t x, const uint8_t y);
 	void fillRect(const uint8_t x, const uint8_t y, const uint8_t width, const uint8_t height);
-	void line(const uint8_t x1, const uint8_t y1, const uint8_t x2, const uint8_t y2);
+	void line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2);
 
 	//void text(const char* textData, const uint8_t x, const uint8_t y);
 	
@@ -132,12 +132,12 @@ void EasyLcd::point(const uint8_t x, const uint8_t y)
 	unselectLcd();
 }
 
-void EasyLcd::line(const uint8_t x1, const uint8_t y1, const uint8_t x2, const uint8_t y2)
+void EasyLcd::line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2)
 {
 	// vertical
 	if (x1 == x2) {
 		if (y2 > y1) {
-			swap< uint8_t >(y1, y2);
+			swap< uint8_t >(&y1, &y2);
 		}
 		fillRect(x1, y1, 1, y2 - y1);
 		return;
@@ -146,7 +146,7 @@ void EasyLcd::line(const uint8_t x1, const uint8_t y1, const uint8_t x2, const u
 	// horizontal
 	if (y1 == y2) {
 		if (x2 > x1) {
-			swap< uint8_t >(x2, x1);
+			swap< uint8_t >(&x2, &x1);
 		}
 		fillRect(x1, y1, x2-x1, 1);
 		return;
