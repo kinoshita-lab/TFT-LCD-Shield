@@ -5,8 +5,7 @@
 #ifndef EASY_LCD_H
 #define EASY_LCD_H
 
-// #include "font_mplus_2p_black.h"
-
+#include <stdlib.h>
 namespace
 {
 	template <typename T>
@@ -22,16 +21,6 @@ namespace
 	{
 		*val = *val <= lower ? lower : *val;
 		*val = *val >= upper ? upper : *val;
-	}
-
-	template <typename T>
-	inline T absValue(T value)
-	{
-		if (value < static_cast< T >(0)) {
-			return  -value;
-		}
-
-		return value;
 	}
 }
 
@@ -55,7 +44,6 @@ public:
 	void start();
 	void stop();
 
-	void textColor(const uint8_t red, const uint8_t green, const uint8_t blue);
 	void backGroundColor(const uint8_t red, const uint8_t green, const uint8_t blue);
 	void foreGroundColor(const uint8_t red, const uint8_t green, const uint8_t blue);
   
@@ -65,8 +53,6 @@ public:
 	void point(const uint8_t x, const uint8_t y);
 	void fillRect(const uint8_t x, const uint8_t y, const uint8_t width, const uint8_t height);
 	void line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2);
-
-	//void text(const char* textData, const uint8_t x, const uint8_t y);
 	
 private:
 	void initDisplay();
@@ -119,7 +105,6 @@ EasyLcd::EasyLcd()
 	// White BackGround,  Black ForeGround
 	_backGroundColor = getInternalColor(255, 255, 255);
 	_foreGroundColor = getInternalColor(0, 0, 0);
-	// _textColor = _foreGroundColor;
 	_lcdSelected = false;
 }
 
@@ -136,19 +121,13 @@ void EasyLcd::line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2)
 {
 	// vertical
 	if (x1 == x2) {
-		if (y2 > y1) {
-			swap< uint8_t >(&y1, &y2);
-		}
-		fillRect(x1, y1, 1, y2 - y1);
+		fillRect(x1, y1, 1, abs(y2 - y1));
 		return;
 	}
 
 	// horizontal
 	if (y1 == y2) {
-		if (x2 > x1) {
-			swap< uint8_t >(&x2, &x1);
-		}
-		fillRect(x1, y1, x2-x1, 1);
+		fillRect(x1, y1, abs(x2-x1), 1);
 		return;
 	}
 	
@@ -204,13 +183,6 @@ EasyLcd::InternalColor EasyLcd::getInternalColor(const uint8_t red, const uint8_
   
 	return color;
 }
-
-/*
-void EasyLcd::textColor(const uint8_t red, const uint8_t green, const uint8_t blue)
-{
-	_textColor = getInternalColor(red, green, blue);
-}
-*/
 
 void EasyLcd::backGroundColor(const uint8_t red, const uint8_t green, const uint8_t blue)
 {
@@ -272,36 +244,7 @@ void EasyLcd::fillRect(const uint8_t x, const uint8_t y, const uint8_t width, co
   
 	unselectLcd();
 }
-/*
-// N.B. font_mplus_2p_black specific 0 ~ 9, : (0x30 ~ 0x3a)
-void EasyLcd::text(const char* textData, const uint8_t x, const uint8_t y)
-{
-	selectLcd();
-	char* currentCharacter = const_cast< char* >(textData);
-  
-	uint8_t currentX = x;
-  
-	while (*currentCharacter != 0) {
-		uint8_t fontIndex = (*currentCharacter) - 0x30;
-		setLcdDrawRange(currentX, y, FONT_WIDTH, FONT_HEIGHT);
-    
-		for (uint8_t yy = 0; yy < FONT_HEIGHT; yy++) {
-      
-			for (uint8_t xx = 0; xx < FONT_WIDTH; xx++) {
-				uint8_t dataIndex = (xx / 8) + (yy * (FONT_WIDTH / 8));
-				uint8_t shift = xx % 8;
-				InternalColor color = ((pgm_read_byte_near( origin_font[fontIndex] + dataIndex) << shift) & B10000000) ? _textColor : _backGroundColor;
-        
-				SPI.transfer(color.upper);
-				SPI.transfer(color.lower);
-			}
-		}
-		currentX += FONT_WIDTH;
-		currentCharacter++;
-	}  
-	unselectLcd();
-}
-*/
+
 
 /* =============================================================================
    private methods
@@ -485,8 +428,8 @@ void EasyLcd::fillScreenInternal(const uint8_t internalColorUpper, const uint8_t
 */
 void EasyLcd::internalLine_Slant(const uint8_t x1, const uint8_t y1, const uint8_t x2, const uint8_t y2)
 {
-	int8_t a = absValue< int8_t >(y2 - y1);
-	int8_t b = absValue< int8_t >(x2 - x1);
+	int8_t a = abs(y2 - y1);
+	int8_t b = abs(x2 - x1);
 
 	int8_t dx = x2 > x1 ? 1 : -1;
 	int8_t dy = y2 > y1 ? 1 : -1;
@@ -496,7 +439,6 @@ void EasyLcd::internalLine_Slant(const uint8_t x1, const uint8_t y1, const uint8
 	if (a > b)
 	{
 		swapped = true;
-		//適宜xとyを入れ替える
 		swap< int8_t >(&a, &b);
 	}
 

@@ -2,14 +2,20 @@
 #include "EasyLcd.h"
 
 EasyLcd lcd;
+  
 void setup() 
 {
   lcd.start();;
   lcd.clearScreen();
 
-  lcd.line(10, 10, 100, 10);
-  lcd.line(10, 10, 10, 100);
-  lcd.line(100, 100, 10, 10);
+  lcd.fillRect(10, 10, 20, 20);
+  
+  lcd.foreGroundColor(255, 0, 0);
+  lcd.point(80, 20);
+  
+  lcd.line(30, 30, 30, 100);
+  
+  lcd.line(30, 30, 100, 30);
 }
 
 
