@@ -1,29 +1,14 @@
 /*
   EasyLcd.h
-  description, version, license, etc.
+  version 1.0
+  2011/04/15
+
+  class Library for TFT-LCD Shield
+  http://shield.io/tft-lcd/
+  
 */
 #ifndef EASY_LCD_H
 #define EASY_LCD_H
-
-#include <stdlib.h>
-namespace
-{
-	template <typename T>
-	inline void swap(T* const a, T* const b)
-	{
-		T tmp = *a;
-		*a = *b;
-		*b = tmp;
-	}
-
-	template <typename T>
-	inline void limit(T* const val, const T lower, const T upper)
-	{
-		*val = *val <= lower ? lower : *val;
-		*val = *val >= upper ? upper : *val;
-	}
-}
-
 
 class EasyLcd
 {
@@ -66,8 +51,7 @@ private:
 	InternalColor getInternalColor(const uint8_t red, const uint8_t green, const uint8_t blue);
   
 	void clearArea(const uint8_t x, const uint8_t y, const uint8_t width, const uint8_t height);
-	void resetLcdStatus();
-	void setLcdDrawRange(const uint8_t x, const uint8_t y, const uint8_t width, const uint8_t height);
+	void resetLcdStatus();	void setLcdDrawRange(const uint8_t x, const uint8_t y, const uint8_t width, const uint8_t height);
    
 	void selectLcd()   { if (_lcdSelected) return; PORTD &= ~(1 << PORTD4); _lcdSelected = true;}
 	void unselectLcd() { if (!_lcdSelected) return; PORTD |=  (1 << PORTD4); _lcdSelected = false;}
@@ -80,11 +64,10 @@ private:
 	void sendData16(const uint8_t data1, const uint8_t data2);
 
 	void fillScreenInternal(const uint8_t internalColorUpper, const uint8_t internalColorLower);
-	void internalLine_Slant(const uint8_t x1, const uint8_t y1, const uint8_t x2, const uint8_t y2);
+	void internalLine_Slant(uint8_t x1, uint8_t y1, const uint8_t x2, const uint8_t y2);
 	
 	InternalColor _backGroundColor;
 	InternalColor _foreGroundColor;
-    // InternalColor _textColor;
 
 	bool _lcdSelected;
 };
@@ -92,7 +75,6 @@ private:
 /* =============================================================================
    public methods
    ============================================================================*/
-
 /**
  */
 EasyLcd::EasyLcd()
@@ -424,81 +406,53 @@ void EasyLcd::fillScreenInternal(const uint8_t internalColorUpper, const uint8_t
 	unselectLcd();
 }
 
-/** based on http://d.hatena.ne.jp/jyakky7/20070325/1174804611
+/** based on http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+function line(x0, y0, x1, y1)
+   dx := abs(x1-x0)
+   dy := abs(y1-y0) 
+   if x0 < x1 then sx := 1 else sx := -1
+   if y0 < y1 then sy := 1 else sy := -1
+   err := dx-dy
+ 
+   loop
+     setPixel(x0,y0)
+     if x0 = x1 and y0 = y1 exit loop
+     e2 := 2*err
+     if e2 > -dy then 
+       err := err - dy
+       x0 := x0 + sx
+     end if
+     if e2 <  dx then 
+       err := err + dx
+       y0 := y0 + sy 
+     end if
+    end loop
 */
-void EasyLcd::internalLine_Slant(const uint8_t x1, const uint8_t y1, const uint8_t x2, const uint8_t y2)
+void EasyLcd::internalLine_Slant(uint8_t x1, uint8_t y1, const uint8_t x2, const uint8_t y2)
 {
-	int8_t a = abs(y2 - y1);
-	int8_t b = abs(x2 - x1);
+	int8_t dx = abs(x2 - x1);
+	int8_t dy = abs(y2 - y1);
 
-	int8_t dx = x2 > x1 ? 1 : -1;
-	int8_t dy = y2 > y1 ? 1 : -1;
-	
-	bool swapped = false;
+	int8_t sx = x1 < x2 ? 1 : -1;
+	int8_t sy = y1 < y2 ? 1 : -1;
 
-	if (a > b)
-	{
-		swapped = true;
-		swap< int8_t >(&a, &b);
-	}
+	int8_t err = dx - dy;
 
-	//`<<'はビットシフト。高速に二倍する(はず)。
-	int8_t df1 = ((b - a) << 1); //dが負のときに加算(2b-2a)
-	int8_t df2 = -(a << 1);      //dが正のときに加算(-2a)
-	int8_t d = b - (a << 1);     //dの初期値(b-2a)
+	while (x1 != x2 || y1 != y2) {
 
-//始点だけ別個に描画する。
-//ここで(x1, y1)に描画
-	point(x1, y1);
+		point(x1, y1);
 
-	int8_t ix1 = x1;
-	int8_t ix2 = x2;
-	int8_t iy1 = y1;
-	int8_t iy2 = y2;
+		int8_t e2 = 2* err;
 
-	if(swapped)
-	{
-		//xy反転バージョン
-		//終点まで回れ
-		while(iy1 != iy2)
-		{
-			//下へ移動
-			iy1 += dy;
-			if(d < 0)
-			{
-				//横へ移動
-				ix1 += dx;
-				d += df1;
-			}
-			else
-				d += df2;
-    
-			//ここで(x1, y1)に描画
-			point(ix1, iy2);
+		if (e2 > -dy) {
+			err -= dy;
+			x1 += sx;
 		}
-	}
-	else
-	{
-		//普通に
-		//終点まで回れ
-		while(ix1 != ix2)
-		{
-			//横へ移動
-			ix1 += dx;
-			if(d < 0)
-			{
-				//下へ移動
-				iy1 += dy;
-				d += df1;
-			}
-			else
-				d += df2;
-    
-			//ここで(x1, y1)に描画
-			point(ix1, iy2);
+		
+		if (e2 < dx) {
+			err += dx;
+			y1 += sy;
 		}
-
 	}
 }
 #endif
-

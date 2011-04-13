@@ -1,10 +1,13 @@
 #include <SPI.h>
+
 #include "EasyLcd.h"
 
 EasyLcd lcd;
+
   
 void setup() 
 {
+  Serial.begin(112500);
   lcd.start();;
   lcd.clearScreen();
 
@@ -13,9 +16,13 @@ void setup()
   lcd.foreGroundColor(255, 0, 0);
   lcd.point(80, 20);
   
-  lcd.line(30, 30, 30, 100);
-  
-  lcd.line(30, 30, 100, 30);
+  lcd.line(100, 100, 30, 30);
+
+  lcd.line(30, 40, 100, 90);
+
+  lcd.line(30, 90, 100, 40);
+
+  lcd.line(100, 30, 30, 100);
 }
 
 
