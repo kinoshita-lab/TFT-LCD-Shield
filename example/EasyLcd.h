@@ -3,7 +3,7 @@
   version 1.0
   2011/04/15
 
-  class Library for TFT-LCD Shield
+  Class Library for TFT-LCD Shield
   http://shield.io/tft-lcd/
   
 */
